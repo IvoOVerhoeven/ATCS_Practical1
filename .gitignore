@@ -31,7 +31,8 @@ test_tube_exp/
 tests/tests_tt_dir/
 tests/save_dir
 default/   
-data/
+!data/*.py
+data/*/
 test_tube_logs/
 test_tube_data/
 datasets/
@@ -127,3 +128,6 @@ venv.bak/
 lightning_logs/
 MNIST
 .DS_Store
+
+# My ignores
+klad.py
