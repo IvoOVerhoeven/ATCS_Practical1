@@ -12,9 +12,12 @@ class InferSent(pl.LightningModule):
     def __init__(self, vocab, args):
         super().__init__()
 
+        self.save_hyperparameters()
+
         self.args = args
 
         self.embedding = Vocab_Embedding(vocab, args)
+        if (not args.embedding_grad): self.embedding.freeze()
 
         if args.encoder == 'Baseline':
             self.encoder = MaxPoolLSTM_Encoder(input_size=vocab.vectors.size(1), args=args)
@@ -85,16 +88,25 @@ class InferSent(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer = optim.SGD([{'params': self.encoder.parameters()}, {'params': self.classifier.parameters()}],
-                              lr=self.args.lr, weight_decay=self.args.weight_decay)
+        optimizer = optim.SGD(self.parameters(),
+                              lr=self.args.lr)
 
-        lr_scheduler  = {'scheduler': optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+        wd_lr = lambda epoch: (self.args.weight_decay ** epoch) * self.args.lr
+        decay_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(optimizer,
+                                                                    lr_lambda=wd_lr),
+                           'interval': 'epoch',
+                           'name': 'LR Decay'}
+
+        plateau_scheduler  = {'scheduler': optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                                 mode='max',
                                                                 factor=self.args.decay_factor,
-                                                                patience=1,
-                                                                min_lr=self.args.min_lr),
-                            'monitor': 'Valid Accuracy',
-                            'name': 'Learning Rate'
+                                                                patience=0,
+                                                                cooldown=0,
+                                                                verbose=True),
+                               'reduce_on_plateau': True,
+                               'monitor': 'Valid Accuracy',
+                               'interval': 'epoch',
+                               'name': 'LR Reduce on Plateau'
                         }
 
-        return [optimizer], [lr_scheduler]
+        return [optimizer], [plateau_scheduler]

@@ -130,15 +130,15 @@ def snli_dataloaders(batch_size, snli_path="./data/snli", num_workers=0, pad_val
 
     train_loader = DataLoader(dataset['train'], batch_size=batch_size,
                               shuffle=shuffle_train, collate_fn=collate_batch,
-                              num_workers=num_workers)
+                              num_workers=num_workers, pin_memory=True)
 
     valid_loader = DataLoader(dataset['validation'], batch_size=batch_size,
                               shuffle=False, collate_fn=collate_batch,
-                              num_workers=num_workers)
+                              num_workers=num_workers, pin_memory=True)
 
     test_loader = DataLoader(dataset['test'], batch_size=batch_size,
                              shuffle=False, collate_fn=collate_batch,
-                             num_workers=num_workers)
+                             num_workers=num_workers, pin_memory=True)
 
     return train_loader, valid_loader, test_loader
 
