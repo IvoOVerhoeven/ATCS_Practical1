@@ -15,7 +15,9 @@ class Baseline_Encoder(nn.Module):
 
     def forward(self, embeddings, text):
 
-        mean_embedding = torch.mean(embeddings * (text != self.padding_val)[:, :, None], dim=0)
+        mask = (text != self.padding_val).unsqueeze(-1)
+
+        mean_embedding = torch.mean(embeddings * mask, dim=0)
 
         return mean_embedding
 
@@ -36,23 +38,15 @@ class SimpleLSTM_Encoder(nn.Module):
 
     def forward(self, embeddings, text):
 
-        lengths = torch.sum((text != self.padding_val).float(), dim=0).long().cpu()
+        lengths = torch.sum((text != self.padding_val).float(), dim=0).long()
 
-        packed = pack_padded_sequence(embeddings, lengths, enforce_sorted=False)
+        h_t, _ = self.lstm(embeddings)
 
-        out, _ = self.lstm(packed)
+        idx = (lengths - 1).view(-1, 1).expand(lengths.size(0), h_t.size(2)).unsqueeze(0)
 
-        seq_unpacked, lens_unpacked = pad_packed_sequence(out)
+        out = h_t.gather(0, idx).squeeze()
 
-        # https://blog.nelsonliu.me/2018/01/25/extracting-last-timestep-outputs-from-pytorch-rnns/
-        idx = (torch.LongTensor(lens_unpacked) -
-               1).view(-1, 1).expand(len(lengths), seq_unpacked.size(2))
-        idx = idx.unsqueeze(0)
-
-        out_T = seq_unpacked.gather(0, idx.to(embeddings.device)).squeeze(0)
-
-        return out_T
-
+        return out
 
 class MaxPoolLSTM_Encoder(nn.Module):
     """The maxpooling LSTM encoder.
@@ -70,9 +64,11 @@ class MaxPoolLSTM_Encoder(nn.Module):
 
     def forward(self, embeddings, text):
 
-        out, _ = self.lstm(embeddings)
+        mask = (text != self.padding_val).unsqueeze(-1)
 
-        mask = (text != self.padding_val).to(embeddings.device)
-        max_pool = torch.max(out * mask[:, :, None], dim=0)[0]
+
+        h_t, _ = self.lstm(embeddings)
+
+        max_pool, _ = torch.max(h_t * mask, dim=0)
 
         return max_pool

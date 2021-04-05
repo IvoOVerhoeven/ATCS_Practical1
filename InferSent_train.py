@@ -10,13 +10,10 @@ import tqdm
 
 from utils.reproducibility import set_seed
 from utils.timing import Timer
-from data.snli import snli_dataloaders
+from data.snli import SNLI
 from models.InferSent import InferSent
 
 CHECKPOINT_PATH = './checkpoints'
-
-class LRStop(Exception):
-    pass
 
 class LearningRateStopper(pl.Callback):
 
@@ -43,8 +40,8 @@ def train(args):
         args - Namespace object from the argparser defining the hyperparameters etc.
     """
 
-    print(f'Training InferSent with {args.encoder} encoder, bidirectional {args.bidirectional} and'\
-          f' {args.hidden_dims} hidden nodes.')
+    print(f"Training InferSent with {args.encoder} encoder, bidirectional {args.bidirectional} and"\
+          f" {args.hidden_dims} hidden nodes.")
 
     full_log_dir = os.path.join(CHECKPOINT_PATH, args.log_dir + '-' +
                                 ('Bi' if args.bidirectional else '') + args.encoder +
@@ -53,21 +50,20 @@ def train(args):
     os.makedirs(os.path.join(full_log_dir, "lightning_logs"), exist_ok=True)  # to fix "Missing logger folder"
     if args.debug:
         os.makedirs(os.path.join(full_log_dir, "lightning_logs", "debug"), exist_ok=True)
+    print(f"Saving models to {full_log_dir}")
 
-    with open(args.glove_path + "/snli_vocab", "rb") as file:
-        vocab = pickle.load(file)
+    snli = SNLI(root="./data", glove_path=args.glove_path)
+    snli.prep_data()
+    train_loader, valid_loader, test_loader = snli.snli_dataloaders(batch_size=args.batch_size,
+                                                                    device='cuda' if args.gpu else 'cpu')
+    print("Data loaded succesfully.\n\n")
 
-    train_loader, valid_loader, test_loader = snli_dataloaders(args.batch_size,
-                                                               snli_path=args.snli_path,
-                                                               num_workers=args.num_workers,
-                                                               pad_value=vocab['<PAD>'])
-
-    model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="Valid Accuracy")
+    model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="Valid Accuracy", verbose=True)
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
     early_stopping = LearningRateStopper(args.min_lr)
 
     trainer = pl.Trainer(default_root_dir=full_log_dir,
-                         checkpoint_callback=model_checkpoint,
+                         checkpoint_callback=model_checkpoint if (not args.debug) else False,
                          callbacks=[lr_monitor, early_stopping],
                          gpus=1 if (torch.cuda.is_available() and args.gpu) else 0,
                          max_epochs=args.max_epochs,
@@ -76,17 +72,17 @@ def train(args):
                          limit_train_batches=100 if args.debug else 1.0,
                          limit_val_batches=100 if args.debug else 1.0,
                          limit_test_batches=10 if args.debug else 1.0)
-                         #fast_dev_run=args.debug)
 
     trainer.logger._default_hp_metric = None
 
     if args.debug:
-        trainer.logger._version = 'debug'
+        trainer.logger._version = "debug"
 
     set_seed(42)
 
-    model = InferSent(vocab=vocab, args=args)
+    model = InferSent(vocab=snli.vocab(), args=args)
 
+    print("Starting Training")
     timer = Timer()
     trainer.fit(model, train_loader, valid_loader)
     print(f"Total training time: {timer.time()}")
@@ -123,7 +119,7 @@ if __name__ == '__main__':
                         help='Whether or not GloVe embeddings are trained')
 
     ## Encoders
-    parser.add_argument('--bidirectional', default=True, type=lambda x: bool(strtobool(x)),
+    parser.add_argument('--bidirectional', default=False, type=lambda x: bool(strtobool(x)),
                         help=('Whether or not encoder should be bidirectional'))
     parser.add_argument('--hidden_dims', default=1024, type=int,
                         help='Number of hidden nodes in LSTMs.')
@@ -153,7 +149,7 @@ if __name__ == '__main__':
                         help='Gradient clipping value')
 
     # Other hyperparameters
-    parser.add_argument('--seed', default=42, type=int,
+    parser.add_argument('--seed', default=1234, type=int,
                         help='Seed to use for reproducing results')
     parser.add_argument('--num_workers', default=0, type=int,
                         help='Number of workers to use in the data loaders.')
@@ -163,11 +159,11 @@ if __name__ == '__main__':
                         help='Name of the subdirectory for PyTorch Lightning logs and the final model.')
 
     # Debug parameters
-    parser.add_argument('--debug', default=True, type=lambda x: bool(strtobool(x)),
+    parser.add_argument('--debug', default=False, type=lambda x: bool(strtobool(x)),
                         help=('Whether to run in debug mode'))
     parser.add_argument('--gpu', default=True, type=lambda x: bool(strtobool(x)),
                         help=('Whether to train on GPU (if available) or CPU'))
-    parser.add_argument('--version', default=2, type=int,
+    parser.add_argument('--version', default=3, type=int,
                         help='Versioning, because this will take a few iterations.')
 
     args = parser.parse_args()

@@ -17,6 +17,8 @@ class InferSent_clf(nn.Module):
 
     def forward(self, u, v):
 
-        uv_concat = torch.cat([u, v, torch.abs(u - v), u * v], dim=-1)
+        features = torch.cat([u, v, torch.abs(u - v), u * v], dim=-1)
 
-        return self.clf(uv_concat)
+        logits = self.clf(features)
+
+        return logits

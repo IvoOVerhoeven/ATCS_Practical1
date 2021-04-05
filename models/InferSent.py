@@ -34,22 +34,29 @@ class InferSent(pl.LightningModule):
         self.classifier = InferSent_clf(encoder_output_dims, args)
 
         # TODO: does this need to ignore padding?
-        self.loss_module = nn.CrossEntropyLoss(ignore_index=vocab['<pad>'])
+        self.loss_module = nn.CrossEntropyLoss()
 
     def encode(self, text):
+
         embedding = self.embedding(text)
+
         encoded = self.encoder(embedding, text)
 
         return encoded
 
     def forward(self, premise, hypothesis):
+
         u = self.encode(premise)
+
         v = self.encode(hypothesis)
 
-        return self.classifier(u, v)
+        logits = self.classifier(u, v)
+
+        return logits
 
     def training_step(self, batch, batch_idx):
-        premise, hypothesis, labels = batch
+
+        premise, hypothesis, labels = batch.premise, batch.hypothesis, batch.label
 
         logits = self.forward(premise, hypothesis)
 
@@ -60,12 +67,12 @@ class InferSent(pl.LightningModule):
         with torch.no_grad():
             acc = torch.mean((torch.argmax(logits, dim=-1) == labels).float())
 
-        self.log('Train Accuracy', acc, on_step=True)
+        self.log('Train Accuracy', acc, on_step=True, prog_bar=True)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
-        premise, hypothesis, labels = batch
+        premise, hypothesis, labels = batch.premise, batch.hypothesis, batch.label
 
         logits = self.forward(premise, hypothesis)
 
@@ -75,10 +82,10 @@ class InferSent(pl.LightningModule):
 
         acc = torch.mean((torch.argmax(logits, dim=-1) == labels).float())
 
-        self.log('Valid Accuracy', acc, on_epoch=True)
+        self.log('Valid Accuracy', acc, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
-        premise, hypothesis, labels = batch
+        premise, hypothesis, labels = batch.premise, batch.hypothesis, batch.label
 
         logits = self.forward(premise, hypothesis)
 
@@ -88,7 +95,7 @@ class InferSent(pl.LightningModule):
 
         acc = torch.mean((torch.argmax(logits, dim=-1) == labels).float())
 
-        self.log('Test Accuracy', acc, on_epoch=True)
+        self.log('Test Accuracy', acc, on_epoch=True, prog_bar=True)
 
     def configure_optimizers(self):
 
