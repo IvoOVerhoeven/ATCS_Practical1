@@ -43,8 +43,11 @@ def train(args):
         args - Namespace object from the argparser defining the hyperparameters etc.
     """
 
+    print(f'Training InferSent with {args.encoder} encoder, bidirectional {args.bidirectional} and'\
+          f' {args.hidden_dims} hidden nodes.')
+
     full_log_dir = os.path.join(CHECKPOINT_PATH, args.log_dir + '-' +
-                                ('Bi' if args.bidirectional else '' + args.encoder) +
+                                ('Bi' if args.bidirectional else '') + args.encoder +
                                 f'_v{args.version}')
     os.makedirs(full_log_dir, exist_ok=True)
     os.makedirs(os.path.join(full_log_dir, "lightning_logs"), exist_ok=True)  # to fix "Missing logger folder"
@@ -105,9 +108,10 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # Model hyperparameters
-    parser.add_argument('--encoder', default='Baseline',
-                        choices=['Baseline', 'SimpleLSTM', 'MaxPoolLSTM'],
-                        help='Which encoder architecture to use')
+    parser.add_argument('--encoder', default='Simple',
+                        choices=['Baseline', 'Simple', 'MaxPool'],
+                        help='Which encoder architecture to use. Choose between Baseline, Simple or MaxPool. '+\
+                             'Make bidirectional with --bidirectional flag.')
     parser.add_argument('--glove_path', default='./data/glove',
                         help='Location of GloVe vectors and vocab')
     parser.add_argument('--snli_path', default='./data/snli',
@@ -119,7 +123,7 @@ if __name__ == '__main__':
                         help='Whether or not GloVe embeddings are trained')
 
     ## Encoders
-    parser.add_argument('--bidirectional', default=False, type=lambda x: bool(strtobool(x)),
+    parser.add_argument('--bidirectional', default=True, type=lambda x: bool(strtobool(x)),
                         help=('Whether or not encoder should be bidirectional'))
     parser.add_argument('--hidden_dims', default=1024, type=int,
                         help='Number of hidden nodes in LSTMs.')
@@ -153,19 +157,17 @@ if __name__ == '__main__':
                         help='Seed to use for reproducing results')
     parser.add_argument('--num_workers', default=0, type=int,
                         help='Number of workers to use in the data loaders.')
-    parser.add_argument('--progress_bar', default=10, type=int,
+    parser.add_argument('--progress_bar', default=50, type=int,
                         help=('How many steps before refreshing progress bar.'))
     parser.add_argument('--log_dir', default='InferSent', type=str,
                         help='Name of the subdirectory for PyTorch Lightning logs and the final model.')
-    parser.add_argument('--val_check_prop', default=0.25, type=float,
-                        help='How often to check validation performance')
 
     # Debug parameters
     parser.add_argument('--debug', default=True, type=lambda x: bool(strtobool(x)),
                         help=('Whether to run in debug mode'))
     parser.add_argument('--gpu', default=True, type=lambda x: bool(strtobool(x)),
                         help=('Whether to train on GPU (if available) or CPU'))
-    parser.add_argument('--version', default=1, type=int,
+    parser.add_argument('--version', default=2, type=int,
                         help='Versioning, because this will take a few iterations.')
 
     args = parser.parse_args()

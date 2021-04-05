@@ -20,13 +20,17 @@ class InferSent(pl.LightningModule):
         if (not args.embedding_grad): self.embedding.freeze()
 
         if args.encoder == 'Baseline':
-            self.encoder = MaxPoolLSTM_Encoder(input_size=vocab.vectors.size(1), args=args)
-        elif args.encoder == 'SimpleLSTM':
-            self.encoder = MaxPoolLSTM_Encoder(input_size=vocab.vectors.size(1), args=args)
-        elif args.encoder == 'MaxPoolLSTM':
-            self.encoder = MaxPoolLSTM_Encoder(input_size=vocab.vectors.size(1), args=args)
+            self.encoder = Baseline_Encoder(vocab, args)
+        elif args.encoder == 'Simple':
+            self.encoder = SimpleLSTM_Encoder(vocab, args)
+        elif args.encoder == 'MaxPool':
+            self.encoder = MaxPoolLSTM_Encoder(vocab, args)
 
-        encoder_output_dims = (2 if args.bidirectional else 1) * args.hidden_dims
+        if args.encoder == 'Baseline':
+            encoder_output_dims = vocab.vectors.size(1)
+        else:
+            encoder_output_dims = (2 if args.bidirectional else 1) * args.hidden_dims
+
         self.classifier = InferSent_clf(encoder_output_dims, args)
 
         # TODO: does this need to ignore padding?
@@ -34,7 +38,7 @@ class InferSent(pl.LightningModule):
 
     def encode(self, text):
         embedding = self.embedding(text)
-        encoded = self.encoder(embedding)
+        encoded = self.encoder(embedding, text)
 
         return encoded
 
@@ -90,12 +94,6 @@ class InferSent(pl.LightningModule):
 
         optimizer = optim.SGD(self.parameters(),
                               lr=self.args.lr)
-
-        wd_lr = lambda epoch: (self.args.weight_decay ** epoch) * self.args.lr
-        decay_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(optimizer,
-                                                                    lr_lambda=wd_lr),
-                           'interval': 'epoch',
-                           'name': 'LR Decay'}
 
         plateau_scheduler  = {'scheduler': optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                                 mode='max',

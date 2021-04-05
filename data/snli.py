@@ -52,14 +52,33 @@ def snli_preprocess(snli_path="./data/snli", glove_path="./data/glove", save=Tru
         print("Constructing vocab")
 
     counter = Counter()
-    for doc in nlp.tokenizer.pipe(dataset['train']['premise'] + dataset['train']['hypothesis'], batch_size=10000):
+    if verbose:
+        print("Constructing vocab - Train Tokens")
+    for doc in nlp.tokenizer.pipe(dataset['train']['premise'] + dataset['train']['hypothesis'],
+                                  batch_size=10000):
         counter.update(list(t.norm_ for t in doc if not t.is_punct))
+    if verbose:
+        print(len(counter.keys()))
+
+    if verbose:
+        print("Constructing vocab - Validation Tokens")
+    for doc in nlp.tokenizer.pipe(dataset['validation']['premise'] + dataset['validation']['hypothesis']):
+        counter.update(list(t.norm_ for t in doc if not t.is_punct))
+    if verbose:
+        print(len(counter.keys()))
+
+    if verbose:
+        print("Constructing vocab - Test Tokens")
+    for doc in nlp.tokenizer.pipe(dataset['test']['premise'] + dataset['test']['hypothesis']):
+        counter.update(list(t.norm_ for t in doc if not t.is_punct))
+    if verbose:
+        print(len(counter.keys()))
 
     vocab = Vocab(counter, specials=('<unk>', '<BOS>', '<EOS>', '<PAD>'), specials_first=True)
 
     if verbose:
         print("Loading GloVe")
-    vocab.load_vectors('glove.840B.300d', cache=glove_path, unk_init=torch.Tensor.normal_)
+    vocab.load_vectors('glove.840B.300d', cache=glove_path)
 
     #############################################################################
     ##### Feed dataset through pre-process pipeline
@@ -70,7 +89,9 @@ def snli_preprocess(snli_path="./data/snli", glove_path="./data/glove", save=Tru
     def preprocess(batch):
 
         def tokenize(example):
-            return list(vocab[t.norm_] for t in nlp.tokenizer(example) if not t.is_punct)
+            # TODO: include punctuation?
+            # if not t.is_punct
+            return list(vocab[t.norm_] for t in nlp.tokenizer(example))
 
         def _text_transform(example):
             return [vocab['<BOS>']] + tokenize(example) + [vocab['<EOS>']]
