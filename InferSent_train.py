@@ -104,7 +104,7 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # Model hyperparameters
-    parser.add_argument('--encoder', default='Simple',
+    parser.add_argument('--encoder', default='Baseline',
                         choices=['Baseline', 'Simple', 'MaxPool'],
                         help='Which encoder architecture to use. Choose between Baseline, Simple or MaxPool. '+\
                              'Make bidirectional with --bidirectional flag.')
@@ -119,9 +119,9 @@ if __name__ == '__main__':
                         help='Whether or not GloVe embeddings are trained')
 
     ## Encoders
-    parser.add_argument('--bidirectional', default=False, type=lambda x: bool(strtobool(x)),
+    parser.add_argument('--bidirectional', default=True, type=lambda x: bool(strtobool(x)),
                         help=('Whether or not encoder should be bidirectional'))
-    parser.add_argument('--hidden_dims', default=1024, type=int,
+    parser.add_argument('--hidden_dims', default=4096, type=int,
                         help='Number of hidden nodes in LSTMs.')
 
     ## Classifier

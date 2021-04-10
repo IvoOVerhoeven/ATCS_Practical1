@@ -1,3 +1,0 @@
---encoder Simple --bidirectional False --hidden_dims 2048
---encoder Simple --bidirectional False --hidden_dims 4096
---encoder Simple --bidirectional True --hidden_dims 4096

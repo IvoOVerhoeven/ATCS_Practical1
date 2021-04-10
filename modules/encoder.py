@@ -66,7 +66,6 @@ class MaxPoolLSTM_Encoder(nn.Module):
 
         mask = (text != self.padding_val).unsqueeze(-1)
 
-
         h_t, _ = self.lstm(embeddings)
 
         max_pool, _ = torch.max(h_t * mask, dim=0)
