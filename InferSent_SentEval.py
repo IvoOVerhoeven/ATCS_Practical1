@@ -84,12 +84,8 @@ def eval(args):
         transfer_tasks = ['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC',
                           'SICKRelatedness', 'SICKEntailment', 'STS14'
                           ]
-    elif args.tasks == 'infersent_ext':
-        transfer_tasks = ['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC',
-                          'SICKRelatedness', 'SICKEntailment', 'STS14', 'STSBenchmark', 'ImageCaptionRetrieval',
-                          'Length', 'WordContent', 'Depth', 'TopConstituents', 'BigramShift', 'Tense',
-                          'SubjNumber', 'ObjNumber', 'OddManOut', 'CoordinationInversion',
-                          'SNLI'
+    elif args.tasks == 'coco':
+        transfer_tasks = ['ImageCaptionRetrieval'
                           ]
     elif args.tasks == 'transfer_all':
         transfer_tasks = ['CR', 'MR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC', 'SNLI',

@@ -1,89 +1,114 @@
-### Deep learning project seed
-Use this seed to start new deep learning / ML projects.
 
-- Built in setup.py
-- Built in requirements
-- Examples with MNIST
-- Badges
-- Bibtex
-
-#### Goals  
-The goal of this seed is to structure ML paper-code the same so that work can easily be extended and replicated.   
-
-### DELETE EVERYTHING ABOVE FOR YOUR PROJECT  
- 
 ---
+<div align="center">
 
-<div align="center">    
- 
-# Your Project Name     
-
-[![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
-[![Conference](http://img.shields.io/badge/NeurIPS-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
-[![Conference](http://img.shields.io/badge/ICLR-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
-[![Conference](http://img.shields.io/badge/AnyConference-year-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)  
-<!--
-ARXIV   
-[![Paper](http://img.shields.io/badge/arxiv-math.co:1480.1111-B31B1B.svg)](https://www.nature.com/articles/nature14539)
--->
-![CI testing](https://github.com/PyTorchLightning/deep-learning-project-template/workflows/CI%20testing/badge.svg?branch=master&event=push)
-
-
-<!--  
-Conference   
--->   
+# ATCS Practical 1: InferSent
+Learning sentence representations from natural language inference data
 </div>
- 
-## Description   
-What it does   
 
-## How to run   
-First, install dependencies   
-```bash
-# clone project   
-git clone https://github.com/YourGithubName/deep-learning-project-template
-
-# install project   
-cd deep-learning-project-template 
-pip install -e .   
-pip install -r requirements.txt
- ```   
- Next, navigate to any file and run it.   
- ```bash
-# module folder
-cd project
-
-# run module (example: mnist as your main contribution)   
-python lit_classifier_main.py    
+# Structure
+```
+ATCS_Practical1
+├── checkpoints
+│   └── model training output, including lightning/tensorboard logs and pretrained weights. Also includes all of the evaluation files. Can be downloaded at: ...
+├── data
+│   ├── snli.py
+│   │       code for processing and preparing SNLI using torchtext's legacy code
+│   └── snli_hugingface.py
+│           code for processing and preparing SNLI using Huggingface's dataset package
+├── evaluation
+│   │     code needed for evaluating models
+│   ├── generate_embeddings.py
+│   │       creates embeddings for all the premises in SNLI. Not actually used (files are too big)
+│   ├── importance_weights.py
+│   │       generates weights for individual words in a sentence. Includes the maxpool propensity score for InferSent
+│   ├── retrieval.py
+│   │       some functions for finding similar sentences in the embeddings. Again, not actually used
+│   └── visualization.py
+│           plenty of modules for pretty visuals in the Analysis notebook
+├── modules
+│   │     individual PyTorch modules for sentence encoders
+│   ├── classifier.py
+│   │       MLP classifier
+│   ├── embedding.py
+│   │     lookup embedding with GloVe-8B-300D vectors
+│   └── encoder.py
+│         all the actual encoders
+├── models
+│   │     code that combines modules into coherent structure (PyTorch-Lightning)
+│   └── InferSent.py
+│         sentence encoder. Allows for forward pass on SNLI, or encode method for general purpose sentence encodings
+├── utils
+│   ├── reproducibility.py
+│   │       some methods for reproducibility's sake
+│   ├── text_processing.py
+│   │       modules for taking text to proper input and back
+│   └── timing.py
+│           times the training runs
+├── InferSent_train.py
+│   └── script for training
+├── InferSent_SentEval.py
+│   └── script for evaluating on SentEval, with certain profiles
+├── snli_embeddings.py
+│   └── script for generating sentence embeddings on SNLI sentences
+├── snli_evaluate.py
+│   └── script for evaluating on SNLI only
+└── snli_linguistic.py
+    └── file for producing interesting analyses, using Spacy's tokenizer and finding misclassified sentences
+```
+# Running Code
+## SNLI Training
+Script for training various sentence encoders on SNLI.
+```
+python InferSent_train.py
+```
+To retrain evaluated models, command line options are (version 3 already exists):
+```
+--encoder Baseline --bidirectional False --debug False --version 4
+--encoder Simple --bidirectional False --hidden_dims 4096 --debug False --version 4
+--encoder Simple --bidirectional True --hidden_dims 4096 --debug False --version 4
+--encoder MaxPool --bidirectional True --hidden_dims 4096 --debug False --version 4
+```
+## SNLI Evaluation
+Script for evaluating models on the SNLI test and validation subsets.
+```
+python snli_evaluate.py
 ```
 
-## Imports
-This project is setup as a package which means you can now easily import any file into any other file like so:
-```python
-from project.datasets.mnist import mnist
-from project.lit_classifier_main import LitClassifier
-from pytorch_lightning import Trainer
+Option 'encoder' specifies which architecture to load in ('Baseline', 'Simple', 'BiSimple', 'BiMaxPool')
+Option 'version' specifies which version to load in. Should correspond to version number in ./checkpoints
 
-# model
-model = LitClassifier()
+Will create pickle file in the corresponding ./checkpoints directory
+## SentEval Evaluation
+Script for evaluating on the SentEval tasks.
+```
+python InferSent_SentEval.py
+```
+To evaluate on the same profiles, use the following command line options:
+```
+--encoder BiMaxPool --tasks InferSent --config default --senteval_path $HOME/SentEval
+--encoder Baseline --tasks InferSent --config default --senteval_path $HOME/SentEval
+--encoder Simple --tasks InferSent --config default --senteval_path $HOME/SentEval
+--encoder BiSimple --tasks InferSent --config default --senteval_path $HOME/SentEval
 
-# data
-train, val, test = mnist()
-
-# train
-trainer = Trainer()
-trainer.fit(model, train, val)
-
-# test using the best model!
-trainer.test(test_dataloaders=test)
+--encoder BiMaxPool --tasks probing_all --config default --senteval_path $HOME/SentEval
+--encoder Baseline --tasks probing_all --config default --senteval_path $HOME/SentEval
+--encoder Simple --tasks probing_all --config default --senteval_path $HOME/SentEval
+--encoder BiSimple --tasks probing_all --config default --senteval_path $HOME/SentEval
 ```
 
-### Citation   
+Option 'tasks' specifies which task profile. Options are 'all', 'infersent', 'working', 'transfer_all' or 'probing_all'.
+Option 'config' specifies which encoder configuration. Options are 'default' and 'fast'. See the SentEval git repo for details.
+Option 'version' specifies which version to load in. Should correspond to version number in ./checkpoints
+
+Will create pickle file in the corresponding ./checkpoints directory
+## Analysis files
+Script for returning some interesting analysis files.
 ```
-@article{YourName,
-  title={Your Title},
-  author={Your team},
-  journal={Location},
-  year={Year}
-}
-```   
+python snli_linguistic.py
+```
+
+Option 'encoder' specifies which architecture to load in ('Baseline', 'Simple', 'BiSimple', 'BiMaxPool')
+Option 'version' specifies which version to load in. Should correspond to version number in ./checkpoints
+
+Will create pickle file in the corresponding ./checkpoints directory

@@ -130,4 +130,4 @@ MNIST
 .DS_Store
 
 # My ignores
-klad.py
+klad*.py

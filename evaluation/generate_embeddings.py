@@ -9,7 +9,7 @@ def generate_embeddings(model, loaders, vocab):
     embeddings = []
 
     for data_loader in loaders:
-        with tqdm(data_loader, unit="batch") as pbar:
+        with tqdm(data_loader, unit="batch", position=0, leave=True, miniters=50) as pbar:
             for batch in pbar:
 
                 premise = batch.premise
@@ -22,8 +22,12 @@ def generate_embeddings(model, loaders, vocab):
 
                 premise_ = premise.index_select(dim=1, index=torch.LongTensor(new_idx).to(premise.device))
 
+                mask = (premise_ != vocab["<PAD>"])
+                if torch.sum(premise_ * mask) == 0:
+                    continue
+
                 with torch.no_grad():
-                    encoded = model.encode(premise_).detach().cpu().numpy()
+                    encoded = model.encode(premise_).detach().cpu()
 
                 sent_set.update(sents)
                 sentences.extend([sents[ii] for ii in new_idx])
@@ -35,6 +39,6 @@ def generate_embeddings(model, loaders, vocab):
     #         for sent in sentences.cpu().numpy()]
 
     #sents, idx = np.unique(sents, return_index=True)
-    embs = torch.stack(embeddings).cpu().numpy()
+    embs = torch.stack(embeddings).numpy()
 
     return list(zip(sentences, embs))

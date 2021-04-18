@@ -1,3 +1,5 @@
+from collections import Counter
+
 import numpy as np
 from numpy.linalg import norm
 import torch
@@ -23,27 +25,27 @@ def cft_weights(text, model, vocab):
     return 1 - cft_sims
 
 
-def highest_sim_retrieval(query, representations, model, vocab, top_k=5):
+def max_pool_propensity(text_processed, model):
+    """Method for computing the max-pool relative frequency given input embedding and model.
 
-    def _cos_sim(x1, x2): return np.dot(x1, x2) / (norm(x1) * norm(x2))
-    def _euc_sim(x1, x2): return norm(x1 - x2)
+    Args:
+        text_processed ([type]): [description]
+        model ([type]): [description]
 
-    query_ = text_preprocessor(query, vocab)
+    Returns:
+        prop: array of scores
+    """
 
-    query_embedding = model.encode(torch.tensor(query_)).numpy()
+    mask = (text_processed != model.encoder.padding_val).unsqueeze(-1)
 
-    sims = np.array([_cos_sim(query_embedding, embed) for _, embed in representations])
+    embs = model.embedding(text_processed)
+    h_t, _ = model.encoder.lstm(embs)
 
-    idx = np.argsort(sims)[::-1]
+    idx = torch.max(h_t * mask, dim=0)[1].tolist()
+    counts = [Counter(id) for id in idx]
 
-    nearest_sim_scores, nearest_neighbours = [], []
+    prop = [[c[key] / h_t.size(-1) for key in c.keys()] for c in counts]
+    prop = [[val / (1 / len(p)) for val in p] for p in prop]
 
-    for i in idx:
-        if len(nearest_neighbours) >= top_k:
-            break
+    return prop
 
-        if (not representations[i][0] in nearest_neighbours):
-            nearest_neighbours.append(representations[i][0])
-            nearest_sim_scores.append(sims[i])
-
-    return nearest_neighbours
