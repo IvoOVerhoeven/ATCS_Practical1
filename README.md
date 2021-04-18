@@ -1,5 +1,3 @@
-
----
 <div align="center">
 
 # ATCS Practical 1: InferSent
@@ -10,7 +8,7 @@ Learning sentence representations from natural language inference data
 ```
 ATCS_Practical1
 ├── checkpoints
-│   └── model training output, including lightning/tensorboard logs and pretrained weights. Also includes all of the evaluation files. Can be downloaded at: ...
+│   └── model training output, including lightning/tensorboard logs and pretrained weights. Also includes all of the evaluation files. Can be downloaded at: [here](https://drive.google.com/drive/folders/1eyJRuFFR20y1e-6WXGQ-Zz7sqG02K7A5?usp=sharing).
 ├── data
 │   ├── snli.py
 │   │       code for processing and preparing SNLI using torchtext's legacy code
@@ -67,6 +65,7 @@ Primary packages used are:
 * torchtext=0.9.0
 * pytorch-lightning=1.2.5
 * spacy=3.0.5
+* scikit-learn=0.24.1 (SentEval dependency)
 # Running Code
 ## SNLI Training
 Script for training various sentence encoders on SNLI.
