@@ -8,7 +8,7 @@ Learning sentence representations from natural language inference data
 ```
 ATCS_Practical1
 ├── checkpoints
-│   └── model training output, including lightning/tensorboard logs and pretrained weights. Also includes all of the evaluation files. Can be downloaded at: [here](https://drive.google.com/drive/folders/1eyJRuFFR20y1e-6WXGQ-Zz7sqG02K7A5?usp=sharing).
+│   └── model training output, including lightning/tensorboard logs and pretrained weights. Also includes all of the evaluation files.
 ├── data
 │   ├── snli.py
 │   │       code for processing and preparing SNLI using torchtext's legacy code
@@ -58,6 +58,8 @@ ATCS_Practical1
 └── snli_linguistic.py
     └── file for producing interesting analyses, using Spacy's tokenizer and finding misclassified sentences
 ```
+# Pretrained Models
+All pretrained models and the evaluation result files (necessary for Analysis.ipynb) can be found [here](https://drive.google.com/drive/folders/1eyJRuFFR20y1e-6WXGQ-Zz7sqG02K7A5?usp=sharing).
 # Environment
 See 'acts_environment_lisa.yml' for training environment.
 Primary packages used are:
