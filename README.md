@@ -26,6 +26,10 @@ ATCS_Practical1
 │   │       some functions for finding similar sentences in the embeddings. Again, not actually used
 │   └── visualization.py
 │           plenty of modules for pretty visuals in the Analysis notebook
+├── models
+│   │     code that combines modules into coherent structure (PyTorch-Lightning)
+│   └── InferSent.py
+│         sentence encoder. Allows for forward pass on SNLI, or encode method for general purpose sentence encodings
 ├── modules
 │   │     individual PyTorch modules for sentence encoders
 │   ├── classifier.py
@@ -34,10 +38,8 @@ ATCS_Practical1
 │   │     lookup embedding with GloVe-8B-300D vectors
 │   └── encoder.py
 │         all the actual encoders
-├── models
-│   │     code that combines modules into coherent structure (PyTorch-Lightning)
-│   └── InferSent.py
-│         sentence encoder. Allows for forward pass on SNLI, or encode method for general purpose sentence encodings
+├── tensorboard_imgs
+│   └──   some pngs in case Tensorboard won't load inside ipynb
 ├── utils
 │   ├── reproducibility.py
 │   │       some methods for reproducibility's sake
@@ -45,6 +47,8 @@ ATCS_Practical1
 │   │       modules for taking text to proper input and back
 │   └── timing.py
 │           times the training runs
+├── Analysis.ipynb
+│   └── Jupyter notebook with the analysis and summary report
 ├── InferSent_train.py
 │   └── script for training
 ├── InferSent_SentEval.py
