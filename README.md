@@ -60,6 +60,13 @@ ATCS_Practical1
 └── snli_linguistic.py
     └── file for producing interesting analyses, using Spacy's tokenizer and finding misclassified sentences
 ```
+# Environment
+See 'acts_environment_lisa.yml' for training environment.
+Primary packages used are:
+* pytorch=1.8.0
+* torchtext=0.9.0
+* pytorch-lightning=1.2.5
+* spacy=3.0.5
 # Running Code
 ## SNLI Training
 Script for training various sentence encoders on SNLI.
